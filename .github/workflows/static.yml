@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GitHub Repo Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .dark {
+            background-color: #121212;
+            color: #eee;
+        }
+
+        .light {
+            background-color: #fff;
+            color: #111;
+        }
+
+        #themeToggle {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+        }
+
+        input, button {
+            padding: 8px;
+            font-size: 16px;
+        }
+
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        li {
+            margin: 6px 0;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+            a:hover {
+                text-decoration: underline;
+            }
+    </style>
+</head>
+<body class="light">
+    <button id="themeToggle">Dark Mode</button>
+    <h1>GitHub Repo Search</h1>
+    <input type="text" id="username" placeholder="Enter GitHub username (e.g. idkcrab)" />
+    <button id="searchBtn">Search Repos</button>
+
+    <ul id="repoList"></ul>
+
+    <script>
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+
+        themeToggle.addEventListener('click', () => {
+            if (body.classList.contains('light')) {
+                body.classList.replace('light', 'dark');
+                themeToggle.textContent = 'Light Mode';
+            } else {
+                body.classList.replace('dark', 'light');
+                themeToggle.textContent = 'Dark Mode';
+            }
+        });
+
+        document.getElementById('searchBtn').addEventListener('click', async () => {
+            const username = document.getElementById('username').value.trim();
+            const repoList = document.getElementById('repoList');
+            repoList.innerHTML = '';
+
+            if (!username) {
+                repoList.innerHTML = '<li>Please enter a GitHub username.</li>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`https://api.github.com/users/${encodeURIComponent(username)}/repos`);
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        repoList.innerHTML = `<li>User "${username}" not found.</li>`;
+                    } else {
+                        repoList.innerHTML = `<li>Error fetching repos. Status: ${response.status}</li>`;
+                    }
+                    return;
+                }
+                const repos = await response.json();
+
+                if (repos.length === 0) {
+                    repoList.innerHTML = `<li>No public repositories found for user "${username}".</li>`;
+                    return;
+                }
+
+                repos.forEach(repo => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<a href="${repo.html_url}" target="_blank" rel="noopener">${repo.name}</a>`;
+                    repoList.appendChild(li);
+                });
+            } catch (error) {
+                repoList.innerHTML = `<li>Error fetching repos: ${error.message}</li>`;
+            }
+        });
+    </script>
+</body>
+</html>
